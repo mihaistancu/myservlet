@@ -33,13 +33,13 @@ public class JettyServerBuilder {
         return this;
     }
 
-//    public JettyServerBuilder secure(KeyStorePassPair tlsJks, boolean trustAllClients) {
-//        this.isTlsEnabled = true;
-//        this.trustAllClients = trustAllClients;
-//        this.keyStore = tlsJks.getKeyStore();
-//        this.keyStorePassword = tlsJks.getKeyStorePass();
-//        return this;
-//    }
+    public JettyServerBuilder secure(KeyStore keyStore, String password, boolean trustAllClients) {
+        this.isTlsEnabled = true;
+        this.trustAllClients = trustAllClients;
+        this.keyStore = keyStore;
+        this.keyStorePassword = password;
+        return this;
+    }
 
     public JettyServerBuilder use(String path, HttpServlet servlet) {
         this.servletInfoList.add(new ServletInfo(path, servlet));
@@ -51,40 +51,37 @@ public class JettyServerBuilder {
 
         ServerConnector connector;
 
-//        if (isTlsEnabled) {
-//            HttpConfiguration httpConfig = new HttpConfiguration();
-//            httpConfig.addCustomizer(new SecureRequestCustomizer());
-//
-//            HttpConnectionFactory http11 = new HttpConnectionFactory(httpConfig);
-//
-//            SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
-//            SSLContext sslContext = Tls.getSslContext();
-//
-//            KeyManagerFactory keyManagerFactory = Keys.getKeyManagerFactory();
-//            Keys.initialize(keyManagerFactory, keyStore, keyStorePassword.toCharArray());
-//            KeyManager[] keyManagers = keyManagerFactory.getKeyManagers();
-//
-//            if (trustAllClients) {
-//                TrustManager[] trustManagers = new TrustManager[]{new TrustAllTrustManager()};
-//                Tls.initialize(sslContext, keyManagers, trustManagers);
-//            }
-//            else {
-//                Tls.initialize(sslContext, keyManagers, null);
-//            }
-//
-//
-//
-//            sslContextFactory.setSslContext(sslContext);
-//            sslContextFactory.setNeedClientAuth(true);
-//
-//            SslConnectionFactory tls = new SslConnectionFactory(sslContextFactory, http11.getProtocol());
-//
-//            connector = new ServerConnector(server, tls, http11);
-//        } else {
-//            connector = new ServerConnector(server);
-//        }
+        if (isTlsEnabled) {
+            HttpConfiguration httpConfig = new HttpConfiguration();
+            httpConfig.addCustomizer(new SecureRequestCustomizer());
 
-        connector = new ServerConnector(server);
+            HttpConnectionFactory http11 = new HttpConnectionFactory(httpConfig);
+
+            SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
+            SSLContext sslContext = getSslContext();
+
+            KeyManagerFactory keyManagerFactory = getKeyManagerFactory();
+            initialize(keyManagerFactory, keyStore, keyStorePassword.toCharArray());
+            KeyManager[] keyManagers = keyManagerFactory.getKeyManagers();
+
+            if (trustAllClients) {
+                TrustManager[] trustManagers = new TrustManager[]{new TrustAllTrustManager()};
+                initialize(sslContext, keyManagers, trustManagers);
+            }
+            else {
+                initialize(sslContext, keyManagers, null);
+            }
+
+            sslContextFactory.setSslContext(sslContext);
+            sslContextFactory.setNeedClientAuth(true);
+
+            SslConnectionFactory tls = new SslConnectionFactory(sslContextFactory, http11.getProtocol());
+
+            connector = new ServerConnector(server, tls, http11);
+        } else {
+            connector = new ServerConnector(server);
+        }
+
         connector.setHost(hostname);
         connector.setPort(port);
 
@@ -101,5 +98,36 @@ public class JettyServerBuilder {
 
         return server;
     }
-}
 
+    public static SSLContext getSslContext() {
+        try {
+            return SSLContext.getInstance("TLS");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static KeyManagerFactory getKeyManagerFactory() {
+        try {
+            return KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void initialize(KeyManagerFactory keyManagerFactory, KeyStore keyStore, char[] password) {
+        try {
+            keyManagerFactory.init(keyStore, password);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void initialize(SSLContext sslContext, KeyManager[] keyManagers, TrustManager[] trustManagers) {
+        try {
+            sslContext.init(keyManagers, trustManagers, null);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+}
