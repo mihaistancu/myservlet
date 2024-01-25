@@ -8,7 +8,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.Instant;
 
-@WebServlet("/*")
 public class MyServlet extends HttpServlet {
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse res) {
