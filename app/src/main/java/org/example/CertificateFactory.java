@@ -70,6 +70,12 @@ public class CertificateFactory {
         return getCertificate(builder, contentSigner, converter);
     }
 
+    public static KeyStore createKeyStore(String password) {
+        KeyPair tlsKeyPair = CertificateFactory.generateKeyPair();
+        X509Certificate tlsCertificate = CertificateFactory.generateCertificate(tlsKeyPair);
+        return CertificateFactory.generateKeyStore(tlsKeyPair.getPrivate(), tlsCertificate, password);
+    }
+
     public static KeyPairGenerator getKeyPairGenerator() {
         try {
             return KeyPairGenerator.getInstance("RSA");
