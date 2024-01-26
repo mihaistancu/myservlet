@@ -1,4 +1,4 @@
-package org.example;
+package org.example.lib;
 
 import javax.net.ssl.*;
 import java.net.URL;

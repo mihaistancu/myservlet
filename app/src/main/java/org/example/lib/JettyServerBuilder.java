@@ -1,4 +1,4 @@
-package org.example;
+package org.example.lib;
 
 
 import jakarta.servlet.http.HttpServlet;
