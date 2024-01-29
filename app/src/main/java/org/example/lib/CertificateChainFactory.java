@@ -1,5 +1,6 @@
 package org.example.lib;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.*;
@@ -34,6 +35,22 @@ import org.bouncycastle.operator.bc.BcDigestCalculatorProvider;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
 public class CertificateChainFactory {
+
+    public static KeyStore getKeyStore() {
+        try {
+            return KeyStore.getInstance("JKS");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void load(KeyStore jks, String path, String password) {
+        try {
+            jks.load(new FileInputStream(path), password.toCharArray());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public static X509Certificate generateCertificate(String cn, KeyPair keyPair, String issuerCN, KeyPair issuerKeyPair, boolean isCaCertificate,
                                                       int validityYears, Extension... extensions) {
@@ -135,36 +152,6 @@ public class CertificateChainFactory {
         return new Extension(Extension.subjectAlternativeName, false, subjectAltNames.getEncoded());
     }
 
-    public static Chain createChain(String rootName, String intermediateName, String leafName, int validityYears) {
-
-        KeyPair rootKeyPair;
-        X509Certificate root;
-        KeyPair intermediateKeyPair;
-        X509Certificate intermediate;
-        KeyPair leafKeyPair;
-        X509Certificate leaf;
-        try {
-            rootKeyPair = generateKeyPair();
-            root = CertificateChainFactory.generateCertificate(rootName, rootKeyPair, rootName, rootKeyPair, true, 2023);
-
-            intermediateKeyPair = generateKeyPair();
-            intermediate = CertificateChainFactory.generateCertificate(intermediateName, intermediateKeyPair, rootName, rootKeyPair, true, 2023);
-
-            leafKeyPair = generateKeyPair();
-            leaf = CertificateChainFactory.generateCertificate(leafName, leafKeyPair, intermediateName, intermediateKeyPair, false, validityYears,
-                    CertificateChainFactory.createExtendedKeyUsage(), CertificateChainFactory.createSubjectAlternativeNames());
-
-            return new Chain(rootKeyPair, root, intermediateKeyPair, intermediate, leafKeyPair, leaf);
-
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
-        }
-    }
-
-    public record Chain(KeyPair rootKeyPair, X509Certificate rootCert, KeyPair intermediateKeyPair, X509Certificate intermediateCert,
-                        KeyPair leafKeyPair, X509Certificate leafCert) {
-    }
-
     public static KeyPair generateKeyPair() {
         KeyPairGenerator keyGen = getKeyPairGenerator();
         keyGen.initialize(2048);
@@ -184,15 +171,6 @@ public class CertificateChainFactory {
         load(jks);
         setKeyEntry(privateKey, certificate, password.toCharArray(), jks);
         return jks;
-    }
-
-
-    public static KeyStore getKeyStore() {
-        try {
-            return KeyStore.getInstance("JKS");
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public static void load(KeyStore jks) {
