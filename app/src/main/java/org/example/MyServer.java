@@ -10,13 +10,13 @@ public class MyServer {
 
     public static void main(String[] args) throws Exception {
         String password = System.getProperty("password", "password");
-        String cert = System.getProperty("cert", "server.jks");
+        String jksPath = System.getProperty("jks.path", "server.jks");
         String host = System.getProperty("host", "localhost");
         int port = Integer.parseInt(System.getProperty("port", "9090"));
         boolean trustAll = Boolean.parseBoolean(System.getProperty("trustAll", "true"));
 
         KeyStore tls = CertificateChainFactory.getKeyStore();
-        CertificateChainFactory.load(tls, cert, password);
+        CertificateChainFactory.load(tls, jksPath, password);
 
         var servlet = new MyServlet();
 

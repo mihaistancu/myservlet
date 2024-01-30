@@ -6,7 +6,10 @@ import java.math.BigInteger;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.security.cert.X509CRL;
 import java.security.cert.X509Certificate;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Random;
@@ -14,21 +17,16 @@ import java.util.Random;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.oiw.OIWObjectIdentifiers;
 import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
-import org.bouncycastle.asn1.x509.AuthorityKeyIdentifier;
-import org.bouncycastle.asn1.x509.BasicConstraints;
-import org.bouncycastle.asn1.x509.ExtendedKeyUsage;
-import org.bouncycastle.asn1.x509.Extension;
-import org.bouncycastle.asn1.x509.GeneralName;
-import org.bouncycastle.asn1.x509.GeneralNames;
-import org.bouncycastle.asn1.x509.KeyPurposeId;
-import org.bouncycastle.asn1.x509.SubjectKeyIdentifier;
-import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
+import org.bouncycastle.asn1.x509.*;
 import org.bouncycastle.cert.CertIOException;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.X509ExtensionUtils;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
+import org.bouncycastle.cert.jcajce.JcaX509CRLConverter;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
+import org.bouncycastle.cert.jcajce.JcaX509v2CRLBuilder;
+import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.DigestCalculator;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.bc.BcDigestCalculatorProvider;
@@ -191,5 +189,28 @@ public class CertificateChainFactory {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static byte[] getCrl(X509Certificate rootCert, PrivateKey rootKey, X509Certificate cert) throws Exception
+    {
+        Date date = Date.from(Instant.now().minus(1, ChronoUnit.DAYS));
+
+        var generator = new JcaX509v2CRLBuilder(cert.getIssuerX500Principal(), date);
+        generator.addCRLEntry(cert.getSerialNumber(), date, CRLReason.keyCompromise);
+        generator.addExtension(Extension.authorityKeyIdentifier, false, new JcaX509ExtensionUtils().createAuthorityKeyIdentifier(rootCert));
+        generator.addExtension(Extension.cRLNumber, false, new CRLNumber(new BigInteger("1000")));
+
+        ContentSigner signer = new JcaContentSignerBuilder("SHA256withRSA").build(rootKey);
+
+        X509CRL crl = new JcaX509CRLConverter().getCRL(generator.build(signer));
+        return crl.getEncoded();
+    }
+
+    public static X509Certificate getCert(KeyStore keyStore) throws Exception {
+        return (X509Certificate) keyStore.getCertificate(keyStore.aliases().nextElement());
+    }
+
+    public static PrivateKey getKey(KeyStore keyStore, String password) throws Exception {
+        return (PrivateKey) keyStore.getKey(keyStore.aliases().nextElement(), password.toCharArray());
     }
 }
