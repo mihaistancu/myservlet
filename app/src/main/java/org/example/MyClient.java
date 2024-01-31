@@ -13,7 +13,7 @@ public class MyClient {
         boolean trustAll = Boolean.parseBoolean(System.getProperty("trustAll", "true"));
         String url = System.getProperty("url", "https://localhost:9090/");
 
-        KeyStore tls = CertificateChainFactory.getKeyStore();
+        KeyStore tls = CertificateChainFactory.getKeyStore("JKS");
         CertificateChainFactory.load(tls, cert, password);
 
         HttpsURLConnection connection = new ConnectionBuilder()

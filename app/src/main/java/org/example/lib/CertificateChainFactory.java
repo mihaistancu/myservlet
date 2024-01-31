@@ -12,13 +12,9 @@ import java.security.cert.X509CRL;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.Random;
+import java.util.*;
 
-import org.bouncycastle.asn1.ASN1ObjectIdentifier;
-import org.bouncycastle.asn1.ASN1Sequence;
+import org.bouncycastle.asn1.*;
 import org.bouncycastle.asn1.oiw.OIWObjectIdentifiers;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.*;
@@ -39,9 +35,9 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
 public class CertificateChainFactory {
 
-    public static KeyStore getKeyStore() {
+    public static KeyStore getKeyStore(String type) {
         try {
-            return KeyStore.getInstance("JKS");
+            return KeyStore.getInstance(type);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -55,8 +51,7 @@ public class CertificateChainFactory {
         }
     }
 
-    public static X509Certificate generateCertificate(String cn, KeyPair keyPair, String issuerCN, KeyPair issuerKeyPair, boolean isCaCertificate,
-                                                      int validityYears, Extension... extensions) {
+    public static X509Certificate generateCertificate(String cn, KeyPair keyPair, String issuerCN, KeyPair issuerKeyPair, boolean isCaCertificate, int validityYears, List<Extension> extensions) {
         try {
             if (issuerCN == null) {
                 issuerCN = cn;
@@ -70,11 +65,13 @@ public class CertificateChainFactory {
         }
     }
 
+    public static int i = 0;
+
     public static X509Certificate issueCertificate(String issuerCN, String cn, KeyPair issuerKeyPair, KeyPair issuedKeyPair, boolean isCACertificate,
-                                                   int validityYears, Extension... extensions)
+                                                   int validityYears, List<Extension> extensions)
             throws NoSuchAlgorithmException, OperatorCreationException, CertIOException, CertificateException {
 
-        BigInteger serialNumber = new BigInteger(512, new Random()); //
+        BigInteger serialNumber = new BigInteger(String.valueOf(i++));
         X500Name issuerDN = new X500Name(issuerCN);
         X500Name subjectDN = new X500Name(cn);
         Date notBefore = new Date();
@@ -169,8 +166,8 @@ public class CertificateChainFactory {
         }
     }
 
-    public static KeyStore generateKeyStore(Key privateKey, X509Certificate certificate, String password) {
-        java.security.KeyStore jks = getKeyStore();
+    public static KeyStore generateKeyStore(Key privateKey, X509Certificate certificate, String password, String type) {
+        java.security.KeyStore jks = getKeyStore(type);
         load(jks);
         setKeyEntry(privateKey, certificate, password.toCharArray(), jks);
         return jks;
@@ -224,7 +221,7 @@ public class CertificateChainFactory {
         OCSPReq ocspRequest = new OCSPReq(req);
         Req[] requestList = ocspRequest.getRequestList();
 
-        X509CertificateHolder holder = new X509CertificateHolder(org.bouncycastle.asn1.x509.Certificate.getInstance(ocspResponder));
+        X509CertificateHolder holder = new X509CertificateHolder(ocspResponder.getEncoded());
         var builder = new BasicOCSPRespBuilder(new RespID(holder.getSubject()));
 
         Calendar thisUpdate = new GregorianCalendar();
@@ -236,9 +233,9 @@ public class CertificateChainFactory {
 
         CertificateStatus certificateStatus = Files.exists(Path.of("revoked"))
                 ? new RevokedStatus(before, 16)
-                : Files.exists(Path.of("unknown"))
+                : (Files.exists(Path.of("unknown"))
                 ? new UnknownStatus()
-                : CertificateStatus.GOOD;
+                : CertificateStatus.GOOD);
 
         for (Req request: requestList) {
             builder.addResponse(request.getCertID(), certificateStatus, now, nexUpdate, null);
@@ -256,6 +253,22 @@ public class CertificateChainFactory {
         ContentSigner signer = new JcaContentSignerBuilder("SHA1withRSA").setProvider("BC").build(privateKey);
         BasicOCSPResp ocspResponse = builder.build(signer, chain, Calendar.getInstance().getTime());
         OCSPRespBuilder ocspResponseBuilder = new OCSPRespBuilder();
-        return ocspResponseBuilder.build(OCSPRespBuilder.SUCCESSFUL, ocspResponse).getEncoded();
+        OCSPResp resp = ocspResponseBuilder.build(OCSPRespBuilder.SUCCESSFUL, ocspResponse);
+        return resp.getEncoded();
+    }
+
+    public static Extension createOcspEndpoint(String ocsp) {
+        try {
+            GeneralName generalName = new GeneralName(GeneralName.uniformResourceIdentifier, new DERIA5String(ocsp));
+
+            var asn = new ASN1EncodableVector();
+            asn.add(new AccessDescription(X509ObjectIdentifiers.ocspAccessMethod, generalName));
+            var der = new DERSequence(asn);
+
+            return new Extension(Extension.authorityInfoAccess, false, der.getEncoded());
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

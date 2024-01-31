@@ -25,10 +25,10 @@ public class MyCrl {
         String host = System.getProperty("host", "localhost");
         int port = Integer.parseInt(System.getProperty("port", "9090"));
 
-        KeyStore root = CertificateChainFactory.getKeyStore();
+        KeyStore root = CertificateChainFactory.getKeyStore("JKS");
         CertificateChainFactory.load(root, rootJksPath, rootPassword);
 
-        KeyStore cert = CertificateChainFactory.getKeyStore();
+        KeyStore cert = CertificateChainFactory.getKeyStore("JKS");
         CertificateChainFactory.load(cert, certJksPath, certPassword);
 
         Server server = new JettyServerBuilder()

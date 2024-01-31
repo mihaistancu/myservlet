@@ -15,7 +15,7 @@ public class MyServer {
         int port = Integer.parseInt(System.getProperty("port", "9090"));
         boolean trustAll = Boolean.parseBoolean(System.getProperty("trustAll", "true"));
 
-        KeyStore tls = CertificateChainFactory.getKeyStore();
+        KeyStore tls = CertificateChainFactory.getKeyStore("JKS");
         CertificateChainFactory.load(tls, jksPath, password);
 
         var servlet = new MyServlet();

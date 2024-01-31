@@ -12,6 +12,9 @@ import java.nio.file.Path;
 import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.bouncycastle.asn1.x509.Extension;
 
 public class MyCA {
@@ -20,7 +23,7 @@ public class MyCA {
 
         String defaultJson =
                 """
-                [{"name": "CN=root"},{"name": "CN=intermediate"},{"name": "CN=leaf"}]
+                [{"name": "CN=root"},{"name": "CN=intermediate"},{"name": "CN=leaf", "ocsp": "http://localhost:9091"}]
                 """;
 
         JsonArray certs = Files.exists(Path.of("certs.json"))
@@ -36,15 +39,26 @@ public class MyCA {
             JsonObject cert = certs.get(i).asObject();
             String name = cert.getString("name", "localhost");
             boolean isCA = i != certs.size() - 1;
-            Extension[] extensions = isCA ? new Extension[0] : new Extension[]{
-                    CertificateChainFactory.createExtendedKeyUsage(),
-                    CertificateChainFactory.createSubjectAlternativeNames()
-            };
+
+            List<Extension> extensions = new ArrayList<>();
+
+            if (isCA) {
+                extensions.add(CertificateChainFactory.createExtendedKeyUsage());
+                extensions.add(CertificateChainFactory.createSubjectAlternativeNames());
+            }
+
+            String ocsp = cert.getString("ocsp", null);
+            if (ocsp != null) {
+                extensions.add(CertificateChainFactory.createOcspEndpoint(ocsp));
+            }
 
             X509Certificate x509 = CertificateChainFactory.generateCertificate(name, keyPair, lastName, lastKeyPair, isCA, 1, extensions);
 
-            KeyStore keyStore = CertificateChainFactory.generateKeyStore(keyPair.getPrivate(), x509, password);
-            keyStore.store(new FileOutputStream(i + ".jks"), password.toCharArray());
+            KeyStore jks = CertificateChainFactory.generateKeyStore(keyPair.getPrivate(), x509, password, "JKS");
+            jks.store(new FileOutputStream(i + ".jks"), password.toCharArray());
+
+            KeyStore pfx = CertificateChainFactory.generateKeyStore(keyPair.getPrivate(), x509, password, "PKCS12");
+            pfx.store(new FileOutputStream(i + ".pfx"), password.toCharArray());
 
             lastName = name;
             lastKeyPair = keyPair;
