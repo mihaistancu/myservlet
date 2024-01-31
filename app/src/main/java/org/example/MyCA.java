@@ -23,7 +23,7 @@ public class MyCA {
 
         String defaultJson =
                 """
-                [{"name": "CN=root"},{"name": "CN=intermediate"},{"name": "CN=leaf", "ocsp": "http://localhost:9091"}]
+                [{"name": "CN=root"},{"name": "CN=intermediate"},{"name": "CN=leaf", "ocsp": "http://localhost:9091", "crl":"http://localhost:9092"}]
                 """;
 
         JsonArray certs = Files.exists(Path.of("certs.json"))
@@ -50,6 +50,11 @@ public class MyCA {
             String ocsp = cert.getString("ocsp", null);
             if (ocsp != null) {
                 extensions.add(CertificateChainFactory.createOcspEndpoint(ocsp));
+            }
+
+            String crl = cert.getString("crl", null);
+            if (crl != null) {
+                extensions.add(CertificateChainFactory.createCrlEndpoint(crl));
             }
 
             X509Certificate x509 = CertificateChainFactory.generateCertificate(name, keyPair, lastName, lastKeyPair, isCA, 1, extensions);

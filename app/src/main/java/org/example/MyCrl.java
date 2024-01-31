@@ -10,6 +10,7 @@ import org.example.lib.JettyServerBuilder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyStore;
+import java.security.cert.X509Certificate;
 
 import static org.example.lib.CertificateChainFactory.*;
 
@@ -23,7 +24,7 @@ public class MyCrl {
         String certJksPath = System.getProperty("cert.jks.path", "cert.jks");
 
         String host = System.getProperty("host", "localhost");
-        int port = Integer.parseInt(System.getProperty("port", "9090"));
+        int port = Integer.parseInt(System.getProperty("port", "9092"));
 
         KeyStore root = CertificateChainFactory.getKeyStore("JKS");
         CertificateChainFactory.load(root, rootJksPath, rootPassword);
@@ -36,14 +37,15 @@ public class MyCrl {
                 .use("/*", new HttpServlet() {
                     @Override
                     protected void service(HttpServletRequest req, HttpServletResponse resp) {
-                        if (!Files.exists(Path.of("revoked"))) {
-                            return;
-                        }
+                        System.out.println("crl request");
+
                         try {
+                            X509Certificate revoked = Files.exists(Path.of("revoked"))
+                                    ? getCert(cert) : null;
                             resp.getOutputStream().write(getCrl(
                                     getCert(root),
                                     getKey(root, rootPassword),
-                                    getCert(cert)));
+                                    revoked));
                         }
                         catch (Exception e) {
                             throw new RuntimeException(e);

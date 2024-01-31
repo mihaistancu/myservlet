@@ -197,8 +197,10 @@ public class CertificateChainFactory {
     {
         Date date = Date.from(Instant.now().minus(1, ChronoUnit.DAYS));
 
-        var generator = new JcaX509v2CRLBuilder(cert.getIssuerX500Principal(), date);
-        generator.addCRLEntry(cert.getSerialNumber(), date, CRLReason.keyCompromise);
+        var generator = new JcaX509v2CRLBuilder(rootCert.getSubjectX500Principal(), date);
+        if (cert != null) {
+            generator.addCRLEntry(cert.getSerialNumber(), date, CRLReason.keyCompromise);
+        }
         generator.addExtension(Extension.authorityKeyIdentifier, false, new JcaX509ExtensionUtils().createAuthorityKeyIdentifier(rootCert));
         generator.addExtension(Extension.cRLNumber, false, new CRLNumber(new BigInteger("1000")));
 
@@ -268,6 +270,24 @@ public class CertificateChainFactory {
             return new Extension(Extension.authorityInfoAccess, false, der.getEncoded());
         }
         catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static Extension createCrlEndpoint(String crl) {
+        try {
+            GeneralName generalName = new GeneralName(GeneralName.uniformResourceIdentifier, new DERIA5String(crl));
+
+            var generalNames = new GeneralNames(generalName);
+            var distributionPointName = new DistributionPointName(generalNames);
+            var distributionPoint = new DistributionPoint(distributionPointName, null, null);
+
+            var asn = new ASN1EncodableVector();
+            asn.add(distributionPoint);
+            var der = new DERSequence(asn);
+
+            return new Extension(Extension.cRLDistributionPoints, false, der.getEncoded());
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
