@@ -3,6 +3,8 @@ package org.example.lib;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -12,8 +14,10 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.Random;
 
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.oiw.OIWObjectIdentifiers;
 import org.bouncycastle.asn1.x500.X500Name;
@@ -26,6 +30,7 @@ import org.bouncycastle.cert.jcajce.JcaX509CRLConverter;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
 import org.bouncycastle.cert.jcajce.JcaX509v2CRLBuilder;
+import org.bouncycastle.cert.ocsp.*;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.DigestCalculator;
 import org.bouncycastle.operator.OperatorCreationException;
@@ -212,5 +217,45 @@ public class CertificateChainFactory {
 
     public static PrivateKey getKey(KeyStore keyStore, String password) throws Exception {
         return (PrivateKey) keyStore.getKey(keyStore.aliases().nextElement(), password.toCharArray());
+    }
+
+    public static byte[] getOcspResponse(byte[] req, X509Certificate ocspResponder, PrivateKey privateKey, boolean includeResponderCertificateInResponse) throws Exception
+    {
+        OCSPReq ocspRequest = new OCSPReq(req);
+        Req[] requestList = ocspRequest.getRequestList();
+
+        X509CertificateHolder holder = new X509CertificateHolder(org.bouncycastle.asn1.x509.Certificate.getInstance(ocspResponder));
+        var builder = new BasicOCSPRespBuilder(new RespID(holder.getSubject()));
+
+        Calendar thisUpdate = new GregorianCalendar();
+        Date now = thisUpdate.getTime();
+        thisUpdate.add(Calendar.DAY_OF_MONTH, -2);
+        Date before = thisUpdate.getTime();
+        thisUpdate.add(Calendar.DAY_OF_MONTH, 7);
+        Date nexUpdate = thisUpdate.getTime();
+
+        CertificateStatus certificateStatus = Files.exists(Path.of("revoked"))
+                ? new RevokedStatus(before, 16)
+                : Files.exists(Path.of("unknown"))
+                ? new UnknownStatus()
+                : CertificateStatus.GOOD;
+
+        for (Req request: requestList) {
+            builder.addResponse(request.getCertID(), certificateStatus, now, nexUpdate, null);
+        }
+
+        Extension extNonce = ocspRequest.getExtension(new ASN1ObjectIdentifier("1.3.6.1.5.5.7.48.1.2"));
+        if (extNonce != null) {
+            builder.setResponseExtensions(new Extensions(extNonce));
+        }
+
+        X509CertificateHolder[] chain = includeResponderCertificateInResponse
+                ? new X509CertificateHolder[]{ holder }
+                : new X509CertificateHolder[0];
+
+        ContentSigner signer = new JcaContentSignerBuilder("SHA1withRSA").setProvider("BC").build(privateKey);
+        BasicOCSPResp ocspResponse = builder.build(signer, chain, Calendar.getInstance().getTime());
+        OCSPRespBuilder ocspResponseBuilder = new OCSPRespBuilder();
+        return ocspResponseBuilder.build(OCSPRespBuilder.SUCCESSFUL, ocspResponse).getEncoded();
     }
 }
