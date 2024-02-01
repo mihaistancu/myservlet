@@ -24,6 +24,9 @@ public class MyOcsp {
         String host = System.getProperty("host", "localhost");
         int port = Integer.parseInt(System.getProperty("port", "9091"));
 
+        boolean includeCertInResponse = Boolean.parseBoolean(System.getProperty("includeCertInResponse", "true"));
+        String status = System.getProperty("status", "good");
+
         KeyStore signer = CertificateChainFactory.getKeyStore("JKS");
         CertificateChainFactory.load(signer, rootJksPath, rootPassword);
 
@@ -40,7 +43,8 @@ public class MyOcsp {
                                     input,
                                     getCert(signer),
                                     getKey(signer, rootPassword),
-                                    true);
+                                    includeCertInResponse,
+                                    status);
                             resp.getOutputStream().write(output);
                         }
                         catch (Exception e) {

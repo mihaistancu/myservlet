@@ -26,6 +26,8 @@ public class MyCrl {
         String host = System.getProperty("host", "localhost");
         int port = Integer.parseInt(System.getProperty("port", "9092"));
 
+        boolean isRevoked = Boolean.parseBoolean(System.getProperty("revoked", "false"));
+
         KeyStore root = CertificateChainFactory.getKeyStore("JKS");
         CertificateChainFactory.load(root, rootJksPath, rootPassword);
 
@@ -40,8 +42,7 @@ public class MyCrl {
                         System.out.println("crl request");
 
                         try {
-                            X509Certificate revoked = Files.exists(Path.of("revoked"))
-                                    ? getCert(cert) : null;
+                            X509Certificate revoked = isRevoked ? getCert(cert) : null;
                             resp.getOutputStream().write(getCrl(
                                     getCert(root),
                                     getKey(root, rootPassword),

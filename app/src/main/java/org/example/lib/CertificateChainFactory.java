@@ -218,7 +218,17 @@ public class CertificateChainFactory {
         return (PrivateKey) keyStore.getKey(keyStore.aliases().nextElement(), password.toCharArray());
     }
 
-    public static byte[] getOcspResponse(byte[] req, X509Certificate ocspResponder, PrivateKey privateKey, boolean includeResponderCertificateInResponse) throws Exception
+    public static KeyPair getKeyPair(KeyStore keyStore, String password) throws Exception {
+        return new KeyPair(getCert(keyStore).getPublicKey(), getKey(keyStore, password));
+    }
+
+    public static KeyPair getKeyPair(String path, String password) throws Exception {
+        KeyStore keyStore = getKeyStore("JKS");
+        load(keyStore, path, password);
+        return getKeyPair(keyStore, password);
+    }
+
+    public static byte[] getOcspResponse(byte[] req, X509Certificate ocspResponder, PrivateKey privateKey, boolean includeResponderCertificateInResponse, String status) throws Exception
     {
         OCSPReq ocspRequest = new OCSPReq(req);
         Req[] requestList = ocspRequest.getRequestList();
@@ -233,11 +243,11 @@ public class CertificateChainFactory {
         thisUpdate.add(Calendar.DAY_OF_MONTH, 7);
         Date nexUpdate = thisUpdate.getTime();
 
-        CertificateStatus certificateStatus = Files.exists(Path.of("revoked"))
-                ? new RevokedStatus(before, 16)
-                : (Files.exists(Path.of("unknown"))
-                ? new UnknownStatus()
-                : CertificateStatus.GOOD);
+        CertificateStatus certificateStatus = switch (status) {
+            case "revoked" -> new RevokedStatus(before, 16);
+            case "good" -> CertificateStatus.GOOD;
+            default -> new UnknownStatus();
+        };
 
         for (Req request: requestList) {
             builder.addResponse(request.getCertID(), certificateStatus, now, nexUpdate, null);
