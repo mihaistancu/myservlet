@@ -301,4 +301,37 @@ public class CertificateChainFactory {
             throw new RuntimeException(e);
         }
     }
+
+    public static Extension createAia(String aia) {
+        try {
+            GeneralName generalName = new GeneralName(GeneralName.uniformResourceIdentifier, new DERIA5String(aia));
+
+            var asn = new ASN1EncodableVector();
+            asn.add(new AccessDescription(X509ObjectIdentifiers.id_ad_caIssuers, generalName));
+            var der = new DERSequence(asn);
+
+            return new Extension(Extension.authorityInfoAccess, false, der.getEncoded());
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static Extension createOcspAndAiaEndpoint(String ocsp, String aia) {
+        try {
+            GeneralName ocspGeneralName = new GeneralName(GeneralName.uniformResourceIdentifier, new DERIA5String(ocsp));
+
+            GeneralName aiaGeneralName = new GeneralName(GeneralName.uniformResourceIdentifier, new DERIA5String(aia));
+
+            var asn = new ASN1EncodableVector();
+            asn.add(new AccessDescription(X509ObjectIdentifiers.ocspAccessMethod, ocspGeneralName));
+            asn.add(new AccessDescription(X509ObjectIdentifiers.id_ad_caIssuers, aiaGeneralName));
+            var der = new DERSequence(asn);
+
+            return new Extension(Extension.authorityInfoAccess, false, der.getEncoded());
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

@@ -26,6 +26,7 @@ public class MyCA {
                 : getKeyPair(issuer + ".jks", password);
 
         boolean isCA = Boolean.parseBoolean(System.getProperty("ca", "true"));
+        String aia = System.getProperty("aia", null);
         String ocsp = System.getProperty("ocsp", null);
         String crl = System.getProperty("crl", null);
 
@@ -36,8 +37,16 @@ public class MyCA {
             extensions.add(CertificateChainFactory.createSubjectAlternativeNames());
         }
 
+        if (ocsp != null & aia != null) {
+            extensions.add(CertificateChainFactory.createOcspAndAiaEndpoint(ocsp, aia));
+        }
+
         if (ocsp != null) {
             extensions.add(CertificateChainFactory.createOcspEndpoint(ocsp));
+        }
+
+        if (aia != null) {
+            extensions.add(CertificateChainFactory.createAia(aia));
         }
 
         if (crl != null) {
@@ -51,5 +60,7 @@ public class MyCA {
 
         KeyStore pfx = CertificateChainFactory.generateKeyStore(keyPair.getPrivate(), x509, password, "PKCS12");
         pfx.store(new FileOutputStream(name + ".pfx"), password.toCharArray());
+
+        try (var output = new FileOutputStream(name + ".cer")) { output.write(x509.getEncoded()); }
     }
 }
