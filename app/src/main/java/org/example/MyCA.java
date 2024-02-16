@@ -26,6 +26,11 @@ public class MyCA {
                 : getKeyPair(issuer + ".jks", password);
 
         boolean isCA = Boolean.parseBoolean(System.getProperty("ca", "true"));
+
+        boolean hasClientUsage = Boolean.parseBoolean(System.getProperty("client", "true"));
+        boolean hasServerUsage = Boolean.parseBoolean(System.getProperty("server", "true"));
+        boolean hasSigningUsage = Boolean.parseBoolean(System.getProperty("signing", "false"));
+
         String aia = System.getProperty("aia", null);
         String ocsp = System.getProperty("ocsp", null);
         String crl = System.getProperty("crl", null);
@@ -33,8 +38,11 @@ public class MyCA {
         List<Extension> extensions = new ArrayList<>();
 
         if (!isCA) {
-            extensions.add(CertificateChainFactory.createExtendedKeyUsage());
-            extensions.add(CertificateChainFactory.createSubjectAlternativeNames());
+            extensions.add(CertificateChainFactory.createExtendedKeyUsage(hasClientUsage, hasServerUsage, hasSigningUsage));
+
+            if (hasServerUsage) {
+                extensions.add(CertificateChainFactory.createSubjectAlternativeNames());
+            }
         }
 
         if (ocsp != null & aia != null) {

@@ -3,8 +3,6 @@ package org.example.lib;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -133,11 +131,19 @@ public class CertificateChainFactory {
         return new X509ExtensionUtils(digCalc).createSubjectKeyIdentifier(publicKeyInfo);
     }
 
-    public static Extension createExtendedKeyUsage() throws IOException {
-        // Create an ExtendedKeyUsage extension for Server and Client Authentication
-        KeyPurposeId serverAuthPurpose = KeyPurposeId.id_kp_serverAuth;
-        KeyPurposeId clientAuthPurpose = KeyPurposeId.id_kp_clientAuth;
-        ExtendedKeyUsage extendedKeyUsage = new ExtendedKeyUsage(new KeyPurposeId[] { serverAuthPurpose, clientAuthPurpose });
+    public static Extension createExtendedKeyUsage(boolean client, boolean server, boolean signing) throws IOException {
+        List<KeyPurposeId> purposes = new ArrayList<>();
+        if (client) {
+            purposes.add(KeyPurposeId.id_kp_clientAuth);
+        }
+        if (server) {
+            purposes.add(KeyPurposeId.id_kp_serverAuth);
+        }
+        if (signing) {
+            purposes.add(KeyPurposeId.id_kp_codeSigning);
+        }
+        ExtendedKeyUsage extendedKeyUsage = new ExtendedKeyUsage(purposes.toArray(KeyPurposeId[]::new));
+
         ASN1Sequence seq = ASN1Sequence.getInstance(extendedKeyUsage.toASN1Primitive());
         return new Extension(Extension.extendedKeyUsage, false, seq.getEncoded());
     }
@@ -198,6 +204,7 @@ public class CertificateChainFactory {
         Date date = Date.from(Instant.now().minus(1, ChronoUnit.DAYS));
 
         var generator = new JcaX509v2CRLBuilder(rootCert.getSubjectX500Principal(), date);
+        generator.setNextUpdate(new GregorianCalendar(2100, Calendar.JANUARY,1).getTime());
         if (cert != null) {
             generator.addCRLEntry(cert.getSerialNumber(), date, CRLReason.keyCompromise);
         }

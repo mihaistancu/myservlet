@@ -4,7 +4,6 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import java.io.IOException;
 import java.time.Instant;
 
 public class MyServlet extends HttpServlet {
@@ -13,7 +12,7 @@ public class MyServlet extends HttpServlet {
         System.out.println("service");
         try {
             res.getOutputStream().print(Instant.now().toString());
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
