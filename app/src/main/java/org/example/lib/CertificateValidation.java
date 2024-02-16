@@ -2,20 +2,18 @@ package org.example.lib;
 
 import java.security.KeyStore;
 import java.security.cert.*;
-import java.util.EnumSet;
 
 public class CertificateValidation {
-    public static void validate(CertPath certPath, KeyStore trustStore, boolean checkRevocation) {
+    public static void validate(X509Certificate certificate, KeyStore trustStore, boolean checkRevocation) {
         try {
-            CertPathValidator validator = CertPathValidator.getInstance("PKIX");
-            PKIXRevocationChecker checker = (PKIXRevocationChecker) validator.getRevocationChecker();
-            checker.setOptions(EnumSet.of(PKIXRevocationChecker.Option.ONLY_END_ENTITY));
+            CertPathBuilder builder = CertPathBuilder.getInstance("PKIX");
 
-            PKIXParameters params = new PKIXParameters(trustStore);
+            X509CertSelector selector = new X509CertSelector();
+            selector.setCertificate(certificate);
+
+            PKIXBuilderParameters params = new PKIXBuilderParameters(trustStore, selector);
             params.setRevocationEnabled(checkRevocation);
-            params.addCertPathChecker(checker);
-
-            validator.validate(certPath, params);
+            builder.build(params);
 
         } catch (Exception exception) {
             throw new RuntimeException(exception);

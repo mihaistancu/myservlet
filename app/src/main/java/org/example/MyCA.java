@@ -48,12 +48,10 @@ public class MyCA {
         if (ocsp != null & aia != null) {
             extensions.add(CertificateChainFactory.createOcspAndAiaEndpoint(ocsp, aia));
         }
-
-        if (ocsp != null) {
+        else if (ocsp != null) {
             extensions.add(CertificateChainFactory.createOcspEndpoint(ocsp));
         }
-
-        if (aia != null) {
+        else if (aia != null) {
             extensions.add(CertificateChainFactory.createAia(aia));
         }
 
