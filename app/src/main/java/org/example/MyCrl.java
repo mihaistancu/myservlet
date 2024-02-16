@@ -7,9 +7,9 @@ import org.eclipse.jetty.server.Server;
 import org.example.lib.CertificateChainFactory;
 import org.example.lib.JettyServerBuilder;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.FileInputStream;
 import java.security.KeyStore;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
 import static org.example.lib.CertificateChainFactory.*;
@@ -18,21 +18,20 @@ public class MyCrl {
 
     public static void main(String[] args) throws Exception {
         String rootPassword = System.getProperty("issuer.password", "password");
-        String rootJksPath = System.getProperty("issuer.jks.path", "issuer.jks");
+        String rootJksPath = System.getProperty("issuer.path", "issuer.jks");
 
-        String certPassword = System.getProperty("cert.password", "password");
-        String certJksPath = System.getProperty("cert.jks.path", "cert.jks");
+        String certPath = System.getProperty("cert.path", "cert.jks");
 
         String host = System.getProperty("host", "localhost");
         int port = Integer.parseInt(System.getProperty("port", "9092"));
 
         boolean isRevoked = Boolean.parseBoolean(System.getProperty("revoked", "false"));
 
-        KeyStore root = CertificateChainFactory.getKeyStore("JKS");
+        KeyStore root = KeyStore.getInstance("JKS");
         CertificateChainFactory.load(root, rootJksPath, rootPassword);
 
-        KeyStore cert = CertificateChainFactory.getKeyStore("JKS");
-        CertificateChainFactory.load(cert, certJksPath, certPassword);
+        CertificateFactory factory = CertificateFactory.getInstance("X.509");
+        X509Certificate certificate = (X509Certificate) factory.generateCertificate(new FileInputStream(certPath));
 
         Server server = new JettyServerBuilder()
                 .host(host, port)
@@ -42,7 +41,7 @@ public class MyCrl {
                         System.out.println("crl request");
 
                         try {
-                            X509Certificate revoked = isRevoked ? getCert(cert) : null;
+                            X509Certificate revoked = isRevoked ? certificate : null;
                             resp.getOutputStream().write(getCrl(
                                     getCert(root),
                                     getKey(root, rootPassword),
