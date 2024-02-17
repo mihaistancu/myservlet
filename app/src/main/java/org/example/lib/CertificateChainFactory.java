@@ -148,8 +148,8 @@ public class CertificateChainFactory {
         return new Extension(Extension.extendedKeyUsage, false, seq.getEncoded());
     }
 
-    public static Extension createSubjectAlternativeNames() throws IOException {
-        GeneralName[] sanEntries = new GeneralName[] { new GeneralName(GeneralName.dNSName, "localhost")
+    public static Extension createSubjectAlternativeNames(String name) throws IOException {
+        GeneralName[] sanEntries = new GeneralName[] { new GeneralName(GeneralName.dNSName, name)
                 // new GeneralName(GeneralName.iPAddress, "192.168.1.1"),
                 // Add more SAN entries as needed
         };

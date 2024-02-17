@@ -27,8 +27,9 @@ public class MyCA {
 
         boolean isCA = Boolean.parseBoolean(System.getProperty("ca", "true"));
 
+        String server = System.getProperty("server", null);
+        boolean hasServerUsage = server != null;
         boolean hasClientUsage = Boolean.parseBoolean(System.getProperty("client", "true"));
-        boolean hasServerUsage = Boolean.parseBoolean(System.getProperty("server", "true"));
         boolean hasSigningUsage = Boolean.parseBoolean(System.getProperty("signing", "false"));
 
         String aia = System.getProperty("aia", null);
@@ -41,7 +42,7 @@ public class MyCA {
             extensions.add(CertificateChainFactory.createExtendedKeyUsage(hasClientUsage, hasServerUsage, hasSigningUsage));
 
             if (hasServerUsage) {
-                extensions.add(CertificateChainFactory.createSubjectAlternativeNames());
+                extensions.add(CertificateChainFactory.createSubjectAlternativeNames(server));
             }
         }
 
