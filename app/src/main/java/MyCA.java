@@ -1,7 +1,5 @@
-package org.example;
-
 import org.bouncycastle.asn1.x509.Extension;
-import org.example.lib.CertificateChainFactory;
+import lib.CertificateChainFactory;
 
 import java.io.FileOutputStream;
 import java.security.KeyPair;
@@ -10,7 +8,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.example.lib.CertificateChainFactory.getKeyPair;
+import static lib.CertificateChainFactory.getKeyPair;
 
 public class MyCA {
     public static void main(String[] args) throws Exception {

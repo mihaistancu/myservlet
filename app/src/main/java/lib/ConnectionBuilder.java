@@ -1,6 +1,7 @@
-package org.example.lib;
+package lib;
 
 import javax.net.ssl.*;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.KeyStore;
@@ -10,6 +11,7 @@ public class ConnectionBuilder {
     private KeyStore keyStore;
     private String password;
     private boolean trustAll;
+    private String method = "POST";
 
     public ConnectionBuilder url(String url) {
         this.url = url;
@@ -27,33 +29,41 @@ public class ConnectionBuilder {
         return this;
     }
 
-    public HttpsURLConnection build() {
-        HttpsURLConnection connection = (HttpsURLConnection) getUrlConnection(url);
+    public ConnectionBuilder method(String method) {
+        this.method = method;
+        return this;
+    }
 
-        SSLContext sslContext = getSslContext();
+    public HttpURLConnection build() {
+        HttpURLConnection connection = (HttpURLConnection) getUrlConnection(url);
 
-        KeyManager[] keyManagers = null;
-        if (keyStore != null) {
-            KeyManagerFactory keyManagerFactory = getKeyManagerFactory();
-            initialize(keyManagerFactory, keyStore, password.toCharArray());
-            keyManagers = keyManagerFactory.getKeyManagers();
+        if (url.startsWith("https")) {
+            HttpsURLConnection tlsConnection = (HttpsURLConnection) connection;
+            SSLContext sslContext = getSslContext();
+
+            KeyManager[] keyManagers = null;
+            if (keyStore != null) {
+                KeyManagerFactory keyManagerFactory = getKeyManagerFactory();
+                initialize(keyManagerFactory, keyStore, password.toCharArray());
+                keyManagers = keyManagerFactory.getKeyManagers();
+            }
+
+            TrustManager[] trustManagers = null;
+            if (trustAll) {
+                trustManagers = new TrustManager[]{new TrustAllTrustManager()};
+            }
+
+            initialize(sslContext, keyManagers, trustManagers);
+            tlsConnection.setSSLSocketFactory(sslContext.getSocketFactory());
         }
 
-        TrustManager[] trustManagers = null;
-        if (trustAll) {
-            trustManagers = new TrustManager[]{new TrustAllTrustManager()};
-        }
-
-        initialize(sslContext, keyManagers, trustManagers);
-        connection.setSSLSocketFactory(sslContext.getSocketFactory());
-
-        setRequestMethod(connection, "POST");
+        setRequestMethod(connection, method);
         connection.setDoInput(true);
         connection.setDoOutput(true);
         return connection;
     }
 
-    public static void setRequestMethod(HttpsURLConnection connection, String method) {
+    public static void setRequestMethod(HttpURLConnection connection, String method) {
         try {
             connection.setRequestMethod(method);
         } catch (Exception e) {

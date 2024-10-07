@@ -1,4 +1,4 @@
-package org.example.lib;
+package lib;
 
 
 import jakarta.servlet.http.HttpServlet;
@@ -23,6 +23,7 @@ public class JettyServerBuilder {
     private List<ServletInfo> servletInfoList = new ArrayList<>();
     private boolean isTlsEnabled = false;
     private boolean trustAllClients = false;
+    private boolean requireClientCert = false;
 
     private record ServletInfo(String path, HttpServlet servlet) {
     }
@@ -46,6 +47,11 @@ public class JettyServerBuilder {
         return this;
     }
 
+    public JettyServerBuilder clientAuth(boolean requireClientCert) {
+        this.requireClientCert = requireClientCert;
+        return this;
+    }
+
     public Server build() {
         Server server = new Server();
 
@@ -64,7 +70,7 @@ public class JettyServerBuilder {
             initialize(keyManagerFactory, keyStore, keyStorePassword.toCharArray());
             KeyManager[] keyManagers = keyManagerFactory.getKeyManagers();
 
-            if (trustAllClients) {
+            if (requireClientCert && trustAllClients) {
                 TrustManager[] trustManagers = new TrustManager[]{new TrustAllTrustManager()};
                 initialize(sslContext, keyManagers, trustManagers);
             }
@@ -73,7 +79,9 @@ public class JettyServerBuilder {
             }
 
             sslContextFactory.setSslContext(sslContext);
-            sslContextFactory.setNeedClientAuth(true);
+            if (requireClientCert) {
+                sslContextFactory.setNeedClientAuth(true);
+            }
 
             SslConnectionFactory tls = new SslConnectionFactory(sslContextFactory, http11.getProtocol());
 

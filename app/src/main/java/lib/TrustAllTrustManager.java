@@ -1,4 +1,4 @@
-package org.example.lib;
+package lib;
 
 import javax.net.ssl.X509TrustManager;
 import java.security.cert.X509Certificate;

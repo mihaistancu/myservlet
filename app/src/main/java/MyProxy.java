@@ -1,5 +1,3 @@
-package org.example;
-
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -45,5 +43,6 @@ public class MyProxy {
         server.setHandler(context);
         server.start();
         server.join();
+
     }
 }

@@ -1,18 +1,16 @@
-package org.example;
-
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.eclipse.jetty.server.Server;
-import org.example.lib.CertificateChainFactory;
-import org.example.lib.JettyServerBuilder;
+import lib.CertificateChainFactory;
+import lib.JettyServerBuilder;
 
 import java.security.KeyStore;
 import java.security.Security;
 import java.util.Base64;
 
-import static org.example.lib.CertificateChainFactory.*;
+import static lib.CertificateChainFactory.*;
 
 public class MyOcsp {
     public static void main(String[] args) throws Exception {

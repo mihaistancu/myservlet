@@ -1,6 +1,4 @@
-package org.example;
-
-import org.example.lib.CertificateValidation;
+import lib.CertificateValidation;
 
 import java.io.FileInputStream;
 import java.security.KeyStore;

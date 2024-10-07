@@ -1,4 +1,4 @@
-package org.example.lib;
+package lib;
 
 import java.security.KeyStore;
 import java.security.cert.*;

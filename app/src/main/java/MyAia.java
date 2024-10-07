@@ -1,10 +1,8 @@
-package org.example;
-
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.server.Server;
-import org.example.lib.JettyServerBuilder;
+import lib.JettyServerBuilder;
 
 import java.io.FileInputStream;
 

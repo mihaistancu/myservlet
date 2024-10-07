@@ -1,4 +1,4 @@
-package org.example.lib;
+package lib;
 
 import java.io.FileInputStream;
 import java.io.IOException;

@@ -1,18 +1,16 @@
-package org.example;
-
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.server.Server;
-import org.example.lib.CertificateChainFactory;
-import org.example.lib.JettyServerBuilder;
+import lib.CertificateChainFactory;
+import lib.JettyServerBuilder;
 
 import java.io.FileInputStream;
 import java.security.KeyStore;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
-import static org.example.lib.CertificateChainFactory.*;
+import static lib.CertificateChainFactory.*;
 
 public class MyCrl {
 
@@ -20,7 +18,7 @@ public class MyCrl {
         String rootPassword = System.getProperty("issuer.password", "password");
         String rootJksPath = System.getProperty("issuer.path", "issuer.jks");
 
-        String certPath = System.getProperty("cert.path", "cert.jks");
+        String certPath = System.getProperty("cert.path", "cert.cer");
 
         String host = System.getProperty("host", "localhost");
         int port = Integer.parseInt(System.getProperty("port", "9092"));
