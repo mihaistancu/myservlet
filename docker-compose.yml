@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  tomcat:
+    image: tomcat:10.1.30
+    container_name: tomcat-servlet-container
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    volumes:
+      - ./servlet/target/servlet-1.0-SNAPSHOT.war:/usr/local/tomcat/webapps/servlet.war
+      - ./server.xml:/usr/local/tomcat/conf/server.xml
+      - ./cert.jks:/usr/local/tomcat/conf/cert.jks
+    environment:
+      - TZ=UTC
+    command: ["catalina.sh", "run"]

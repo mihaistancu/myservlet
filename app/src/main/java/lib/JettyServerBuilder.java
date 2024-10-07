@@ -59,7 +59,9 @@ public class JettyServerBuilder {
 
         if (isTlsEnabled) {
             HttpConfiguration httpConfig = new HttpConfiguration();
-            httpConfig.addCustomizer(new SecureRequestCustomizer());
+            var customizer = new SecureRequestCustomizer();
+            customizer.setSniHostCheck(false);
+            httpConfig.addCustomizer(customizer);
 
             HttpConnectionFactory http11 = new HttpConnectionFactory(httpConfig);
 
