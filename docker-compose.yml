@@ -3,14 +3,15 @@ version: '3.8'
 services:
   tomcat:
     image: tomcat:10.1.30
-    container_name: tomcat-servlet-container
+    container_name: tomcat
     ports:
       - "8080:8080"
       - "8443:8443"
     volumes:
       - ./servlet/target/servlet-1.0-SNAPSHOT.war:/usr/local/tomcat/webapps/servlet.war
       - ./server.xml:/usr/local/tomcat/conf/server.xml
-      - ./cert.jks:/usr/local/tomcat/conf/cert.jks
+      - ./server.jks:/usr/local/tomcat/conf/server.jks
+      - ./trusted.jks:/usr/local/tomcat/conf/trusted.jks
     environment:
-      - TZ=UTC
+      - CATALINA_OPTS=-Dcom.sun.security.enableCRLDP=true
     command: ["catalina.sh", "run"]

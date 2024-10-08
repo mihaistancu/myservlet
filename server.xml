@@ -29,8 +29,11 @@
                    maxParameterCount="1000"
                    >
             <UpgradeProtocol className="org.apache.coyote.http2.Http2Protocol" />
-            <SSLHostConfig>
-                <Certificate certificateKeystoreFile="conf/cert.jks"
+            <SSLHostConfig certificateVerification="required"
+                           revocationEnabled="true"
+                           truststoreFile="conf/trusted.jks"
+                           truststorePassword="password" >
+                <Certificate certificateKeystoreFile="conf/server.jks"
                              certificateKeyPassword="password"
                              certificateKeystorePassword="password" type="RSA" />
             </SSLHostConfig>
