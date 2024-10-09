@@ -18,7 +18,7 @@ import java.util.List;
 public class JettyServerBuilder {
     private KeyStore keyStore;
     private String keyStorePassword;
-    private String hostname = "localhost";
+    private String hostname = "0.0.0.0";
     private int port = 443;
     private List<ServletInfo> servletInfoList = new ArrayList<>();
     private boolean isTlsEnabled = false;

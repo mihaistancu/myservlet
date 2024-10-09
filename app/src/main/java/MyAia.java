@@ -9,7 +9,7 @@ import java.io.FileInputStream;
 public class MyAia {
 
     public static void main(String[] args) throws Exception {
-        String host = System.getProperty("host", "localhost");
+        String host = System.getProperty("host", "0.0.0.0");
         int port = Integer.parseInt(System.getProperty("port", "9093"));
 
         String filePath = System.getProperty("file", "file");

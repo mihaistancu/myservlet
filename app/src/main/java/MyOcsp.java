@@ -19,7 +19,7 @@ public class MyOcsp {
         String rootPassword = System.getProperty("signer.password", "password");
         String rootJksPath = System.getProperty("signer.jks.path", "signer.jks");
 
-        String host = System.getProperty("host", "localhost");
+        String host = System.getProperty("host", "0.0.0.0");
         int port = Integer.parseInt(System.getProperty("port", "9091"));
 
         boolean includeCertInResponse = Boolean.parseBoolean(System.getProperty("includeCertInResponse", "true"));

@@ -20,7 +20,7 @@ public class MyCrl {
 
         String certPath = System.getProperty("cert.path", "cert.cer");
 
-        String host = System.getProperty("host", "localhost");
+        String host = System.getProperty("host", "0.0.0.0");
         int port = Integer.parseInt(System.getProperty("port", "9092"));
 
         boolean isRevoked = Boolean.parseBoolean(System.getProperty("revoked", "false"));
