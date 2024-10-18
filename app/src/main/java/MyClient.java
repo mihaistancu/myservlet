@@ -4,11 +4,18 @@ import lib.ConnectionBuilder;
 import javax.net.ssl.HttpsURLConnection;
 import java.net.HttpURLConnection;
 import java.security.KeyStore;
+import java.security.Security;
 
 public class MyClient {
     public static void main(String[] args) throws Exception {
         String url = System.getProperty("url", "https://localhost:9090/");
         String method = System.getProperty("method", "GET");
+
+        String useBC = System.getProperty("useBC", "false");
+        if (useBC.equals("true")) {
+            Security.insertProviderAt(new org.bouncycastle.jce.provider.BouncyCastleProvider(), 1);
+            Security.insertProviderAt(new org.bouncycastle.jsse.provider.BouncyCastleJsseProvider(), 2);
+        }
 
         var builder = new ConnectionBuilder()
                 .url(url)

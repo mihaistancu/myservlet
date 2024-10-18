@@ -7,8 +7,7 @@ services:
     volumes:
       - ./servlet/target/servlet-1.0-SNAPSHOT.war:/usr/local/tomcat/webapps/servlet.war
       - ./server.xml:/usr/local/tomcat/conf/server.xml
-      - ./server.jks:/usr/local/tomcat/conf/server.jks
-      - ./trusted.jks:/usr/local/tomcat/conf/trusted.jks
+      - ./app/target:/opt/app
     environment:
       - CATALINA_OPTS=-Dcom.sun.security.enableCRLDP=true
     command: ["catalina.sh", "run"]

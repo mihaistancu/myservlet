@@ -19,6 +19,7 @@
 
         <Connector port="8080" protocol="HTTP/1.1"
                    connectionTimeout="20000"
+                   address="0.0.0.0"
                    redirectPort="8443"
                    maxParameterCount="1000"
         />
@@ -26,14 +27,15 @@
 
         <Connector port="8443" protocol="org.apache.coyote.http11.Http11NioProtocol"
                    maxThreads="150" SSLEnabled="true"
+                   address="0.0.0.0"
                    maxParameterCount="1000"
                    >
             <UpgradeProtocol className="org.apache.coyote.http2.Http2Protocol" />
             <SSLHostConfig certificateVerification="required"
                            revocationEnabled="true"
-                           truststoreFile="conf/trusted.jks"
+                           truststoreFile="/opt/app/trusted.jks"
                            truststorePassword="password" >
-                <Certificate certificateKeystoreFile="conf/server.jks"
+                <Certificate certificateKeystoreFile="/opt/app/server.jks"
                              certificateKeyPassword="password"
                              certificateKeystorePassword="password" type="RSA" />
             </SSLHostConfig>
